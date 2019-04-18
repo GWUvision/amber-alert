@@ -5,12 +5,14 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
+img_size = (255, 255)
+
 def load_and_resize(im_path):
     """
     Loads an image and resizes to 224x224.
     """
     bgr_img = cv2.imread(im_path)
-    bgr_img = cv2.resize(bgr_img, (224,224))
+    bgr_img = cv2.resize(bgr_img, img_size)
     return bgr_img
 
 def preprocess_im(im_path,mean_im_path):
@@ -35,13 +37,12 @@ def combine_image_and_heatmap(img,heatmap):
     """
     cmap = plt.get_cmap('jet') # colormap for the heatmap
     heatmap = heatmap - np.min(heatmap)
-    print('heatmap: ', heatmap)
     heatmap /= np.max(heatmap)
     heatmap = cmap(np.max(heatmap)-heatmap)
     if np.max(heatmap) < 255.:
         heatmap *= 255
 
-    heatmap_img = cv2.resize(heatmap,(224,224))
+    heatmap_img = cv2.resize(heatmap,img_size)
     bg = Image.fromarray(img.astype('uint8')).convert('RGBA')
     fg = Image.fromarray(heatmap_img.astype('uint8')).convert('RGBA')
     outIm = np.array(Image.blend(bg,fg,alpha=0.5))

@@ -6,18 +6,21 @@ from .image_ops import *
 
 class_size=16
 
-def individualSimilarity(Fvec, clazz, i1, i2):
-    # Calculate the index of the Fvec we care about, convert to np
-    Fvec1 = Fvec[clazz//10 * class_size + i1].numpy()
+def individualSimilarity(Fvec, clazz, i1, i2):    
+    # Calculate the index of the Fvec we care about
+    fvec_i1 = clazz//10 * class_size + i1
+    Fvec1 = Fvec[fvec_i1].numpy()
+    print('Fvec1 before reshape: ', Fvec1)
     # Convert shape (64,) to (64, 1)
     Fvec1 = Fvec1.reshape(Fvec1.shape[-1], -1)
 
-    Fvec2 = Fvec[clazz//10 * class_size + i2].numpy()
+    fvec_i2 = clazz//10 * class_size + i2
+    Fvec2 = Fvec[fvec_i2].numpy()
     Fvec2 = Fvec2.reshape(Fvec2.shape[-1], -1)
     print('Fvec1 type: ', type(Fvec1))
     print('Fvec1 shape: ', np.shape(Fvec1))
-    print('Fvec[{}]: {}'.format(i1, Fvec1))
-    print('Fvec[{}]: {}'.format(i2, Fvec2))
+    print('Fvec[{}]: {}'.format(fvec_i1, Fvec1))
+    print('Fvec[{}]: {}'.format(fvec_i2, Fvec2))
 
     # Compute heatmaps
     heatmap1, heatmap2 = compute_spatial_similarity(Fvec1, Fvec2)
@@ -41,4 +44,4 @@ def RunSimilarity(src, phase='val'):
     Fvec = torch.load(src + phase + 'Fvecs.pth')
     print(Fvec.size())
     # Pass Fvecs, class, image index 1, image index 2
-    individualSimilarity(Fvec, 0, 0, 0)
+    individualSimilarity(Fvec, 1000, 0, 10)
