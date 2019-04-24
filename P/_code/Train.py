@@ -1,7 +1,7 @@
 import os, time, copy, random
 from glob import glob
 
-from torchvision import models, transforms, datasets
+from torchvision import transforms, datasets
 from torch.utils.data.sampler import SequentialSampler
 import torch.optim as optim
 import torch.nn as nn
@@ -13,6 +13,7 @@ from .Loss import NpairsLossPB,NpairsLoss
 from .G_eval import recallAcc
 from .G_test import eva
 from .color_lib import RGBmean,RGBstdv
+from .resnet import resnet18, resnet50
 
 PHASE = ['tra','val']
 
@@ -108,10 +109,10 @@ class learn():
     ##################################################
     def setModel(self):
         if self.model_name == 'r18':
-            self.model = models.resnet18(pretrained=True)
+            self.model = resnet18(pretrained=True)
             print('Setting model: resnet18')
         else:
-            self.model = models.resnet50(pretrained=True)
+            self.model = resnet50(pretrained=True)
             print('Setting model: resnet50')
             
         num_ftrs = self.model.fc.in_features

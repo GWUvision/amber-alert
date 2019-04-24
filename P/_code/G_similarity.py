@@ -44,4 +44,4 @@ def RunSimilarity(src, phase='val'):
     Fvec = torch.load(src + phase + 'Fvecs.pth')
     print(Fvec.size())
     # Pass Fvecs, class, image index 1, image index 2
-    individualSimilarity(Fvec, 1000, 0, 10)
+    individualSimilarity(Fvec, 0, 0, 0)

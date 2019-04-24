@@ -18,23 +18,32 @@ x = None
 y = None
 a = None
 Labels = None
+Last_conv = None
 
 def eva(dsets, model, pb):
     Labels = []
+    Last_convs = []
     Fvecs = []
     dataLoader = torch.utils.data.DataLoader(dsets, batch_size=500, sampler=SequentialSampler(dsets), num_workers=16)
     torch.set_grad_enabled(False)
     for data in dataLoader:
         inputs_bt, labels_bt = data # <FloatTensor> <LongTensor>
+	
         fvec = model(inputs_bt.cuda())
+	last_conv = model.last_conv_out
+
         fvec = norml2Galaxy(fvec,pb[0],pb[1])
         fvec = fvec.cpu()
         Fvecs.append(fvec)
 	Labels.append(labels_bt)
+	Last_convs.append(last_conv)
 
     global Labels
     Labels = torch.cat(Labels,0)
             
+    global Last_conv
+    Last_conv = torch.cat(Last_convs,0)
+
     return torch.cat(Fvecs,0)
 
 def plot(val_tra):
@@ -115,16 +124,14 @@ def RunTest(Data, dst, data_dict, imgsize, phase, pb=[0,0],dst_model=None):
         if not os.path.exists(dst): 
             os.makedirs(dst)
         model = torch.load(dst_model + 'model.pth').train(False)
-        Fvecs = eva(dsets, model, pb)
-	#tsne(Fvecs, phase)	
-        torch.save(Fvecs, dst + phase + 'Fvecs.pth')
-        torch.save(dsets, dst + phase + 'dsets.pth')
     else:
         model = torch.load(dst + 'model.pth').train(False)
-        Fvecs = eva(dsets, model, pb)
-	#tsne(Fvecs, phase)	
-        torch.save(Fvecs, dst + phase + 'Fvecs.pth')
-        torch.save(dsets, dst + phase + 'dsets.pth')
+
+    Fvecs = eva(dsets, model, pb)
+    #tsne(Fvecs, phase)	
+    torch.save(Last_convs, dst + phase + 'Last_convs.pth')
+    torch.save(Fvecs, dst + phase + 'Fvecs.pth')
+    torch.save(dsets, dst + phase + 'dsets.pth')
     
     
     

@@ -14,9 +14,9 @@ for threshold in [0.5]:
     for d,l in [(64,1)]:
         print('dimension = {}'.format(d))
         dst = '_result/'
-        print(dst)
+        #print(dst)
         #RunTrain(Data, dst, data_dict, emb_dim=d*l, th=threshold, pb=[d,l])
         #RunTest(Data,  dst, data_dict['tra'], 255, 'tra', pb=[d,l])
-        #RunTest(Data,  dst, data_dict['val'], 255, 'val', pb=[d,l])
+        RunTest(Data,  dst, data_dict['val'], 255, 'val', pb=[d,l])
         #RunAcc(dst)
-	RunSimilarity(dst)
+	#RunSimilarity(dst)
