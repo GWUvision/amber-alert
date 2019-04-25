@@ -8,10 +8,12 @@ from torch.utils.data.sampler import SequentialSampler
 from torch.autograd import Variable
 from torchvision import transforms
 from sklearn.manifold import TSNE 
+from torch import nn as nn
 
 from .Utils import norml2, norml2Galaxy
 from .Reader import ImageReader
 from .color_lib import RGBmean,RGBstdv
+from .resnet import resnet18, resnet50
 
 fig = None
 x = None
@@ -20,7 +22,7 @@ a = None
 Labels = None
 Last_conv = None
 
-def eva(dsets, model, pb):
+def eva(dsets, model, pb, fc_Conv):
     Labels = []
     Last_convs = []
     Fvecs = []
@@ -31,12 +33,13 @@ def eva(dsets, model, pb):
 	
         fvec = model(inputs_bt.cuda())
 	last_conv = model.last_conv_out
+	fmap = fc_Conv(last_conv)
 
         fvec = norml2Galaxy(fvec,pb[0],pb[1])
         fvec = fvec.cpu()
         Fvecs.append(fvec)
 	Labels.append(labels_bt)
-	Last_convs.append(last_conv)
+	Last_convs.append(fmap)
 
     global Labels
     Labels = torch.cat(Labels,0)
@@ -117,19 +120,37 @@ def RunTest(Data, dst, data_dict, imgsize, phase, pb=[0,0],dst_model=None):
                                           transforms.CenterCrop(imgsize),
                                           transforms.ToTensor(),
                                           transforms.Normalize(RGBmean[Data], RGBstdv[Data])])
-    
+
+
+    embed_size = pb[0]
     print(len(data_dict.items()))
     dsets = ImageReader(data_dict, data_transforms)
     if not os.path.exists(dst + 'model.pth'): 
         if not os.path.exists(dst): 
             os.makedirs(dst)
-        model = torch.load(dst_model + 'model.pth').train(False)
+        state_dict = torch.load(dst_model + 'model.pth').state_dict()
     else:
-        model = torch.load(dst + 'model.pth').train(False)
+        state_dict = torch.load(dst + 'model.pth').state_dict()
 
-    Fvecs = eva(dsets, model, pb)
+    model = resnet50().train(False) 
+    
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, embed_size)
+    model.avgpool=nn.AvgPool2d(8)
+
+    model.load_state_dict(state_dict)
+    model = model.cuda()
+    ### convert fc layer to conv layer
+    fc = model.fc.state_dict()
+    in_ch = 2048
+    out_ch = embed_size
+    fc_Conv = nn.Conv2d(in_ch, out_ch, 1, 1).cuda()
+    fc_Conv.load_state_dict({"weight":fc["weight"].view(out_ch, in_ch, 1, 1),
+                          "bias":fc["bias"]})
+
+    Fvecs = eva(dsets, model, pb, fc_Conv)
     #tsne(Fvecs, phase)	
-    torch.save(Last_convs, dst + phase + 'Last_convs.pth')
+    torch.save(Last_conv, dst + phase + 'Last_convs.pth')
     torch.save(Fvecs, dst + phase + 'Fvecs.pth')
     torch.save(dsets, dst + phase + 'dsets.pth')
     
